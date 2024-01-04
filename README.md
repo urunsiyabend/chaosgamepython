@@ -2,7 +2,7 @@
 ![Chaos Game](img/chaos-game.png)
 
 ## Description
-This is a simple framework implementation of the Chaos Game in PyGame. The Chaos Game is a mathematical game that simulates the process of a trajectory of a point subject to non-linear iterative function systems. The game is played by plotting a point at a random position in a square and then iteratively moving the point halfway towards one of the vertices of a polygon, randomly chosen from a given set of vertices. The vertices are fixed for a given polygon, and do not change position. The polygon used in this implementation is a triangle, but it can be easily changed to any other polygon.
+This is a simple framework implementation of the Chaos Game in Python. The Chaos Game is a mathematical game that simulates the process of a trajectory of a point subject to non-linear iterative function systems. The game is played by plotting a point at a random position in a square and then iteratively moving the point halfway towards one of the vertices of a polygon, randomly chosen from a given set of vertices. The vertices are fixed for a given polygon, and do not change position. The polygon used in this implementation is a triangle, but it can be easily changed to any other polygon.
 
 The Chaos Game is a form of dynamical system. The game can be extended to higher dimensions by using a regular polyhedron or even a higher-dimensional polytope as the space to move in, and a set of non-linear functions. The game can also be played with a circle instead of a polygon.
 
