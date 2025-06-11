@@ -64,8 +64,11 @@ class ChaosGameApp:
                     self.drawer.handle_event(event)
                 self.manager.process_events(event)
 
-            if self.drawer and self.drawer.running:
-                self.drawer.step()
+            if self.drawer:
+                if self.drawer.running:
+                    self.drawer.step()
+                else:
+                    self.stop_simulation()
             self.manager.update(time_delta)
             self.screen.fill((0, 0, 0))
             self.manager.draw_ui(self.screen)
@@ -78,7 +81,6 @@ class ChaosGameApp:
             iteration_count = int(self.iter_input.get_text())
         except ValueError:
             iteration_count = DEFAULT_ITERATIONS
-        shape_name = shape_name[0]
         shape = load_shape(shape_name, iteration_count)
         self.drawer = PygameGraphicDrawer(
             shape,

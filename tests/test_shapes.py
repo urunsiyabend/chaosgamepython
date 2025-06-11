@@ -19,6 +19,14 @@ def test_load_shape_invalid():
     with pytest.raises(ValueError):
         load_shape('unknown')
 
+
+def test_load_shape_full_names():
+    shape = load_shape('Barnsley Fern')
+    assert isinstance(shape, BarnsleyFern)
+
+    shape = load_shape('Sierpinski Triangle')
+    assert isinstance(shape, SierpinskiTriangle)
+
 from barnsley_fern import BarnsleyFern
 
 def test_barnsley_iter_limit():
