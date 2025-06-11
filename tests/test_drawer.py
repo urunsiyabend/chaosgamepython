@@ -1,4 +1,5 @@
 import os
+import pytest
 from graphics import PygameGraphicDrawer
 from barnsley_fern import BarnsleyFern
 
@@ -29,4 +30,44 @@ def test_zoom_and_pan_methods():
     drawer.pan(-2, 2)
     assert drawer.offset_x == 3
     assert drawer.offset_y == -1
+
+
+def test_coordinate_conversions_and_storage():
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    shape = BarnsleyFern(0, 0)
+    drawer = PygameGraphicDrawer(shape, 100, 100, False, "test")
+
+    world_pt = (1.0, 1.5)
+
+    # store point using world coordinates
+    drawer.add_world_point(world_pt)
+
+    drawer.zoom_in(2.0)
+    drawer.pan(10, 5)
+
+    # the stored world point should not change when zooming or panning
+    assert drawer.points[0] == world_pt
+
+    screen_pt = drawer.world_to_screen(world_pt)
+    back_to_world = drawer.screen_to_world(screen_pt)
+
+    assert back_to_world[0] == pytest.approx(world_pt[0])
+    assert back_to_world[1] == pytest.approx(world_pt[1])
+
+
+def test_add_screen_point():
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    shape = BarnsleyFern(0, 0)
+    drawer = PygameGraphicDrawer(shape, 100, 100, False, "test")
+
+    drawer.zoom_in(1.5)
+    drawer.pan(20, -10)
+
+    screen_pt = (60, 70)
+    world_pt = drawer.screen_to_world(screen_pt)
+
+    drawer.add_screen_point(screen_pt)
+
+    assert drawer.points[-1][0] == pytest.approx(world_pt[0])
+    assert drawer.points[-1][1] == pytest.approx(world_pt[1])
 

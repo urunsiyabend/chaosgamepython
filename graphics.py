@@ -36,6 +36,27 @@ class PygameGraphicDrawer(GraphicDrawer):
         self.zoom = 1.0
         self.offset_x = 0
         self.offset_y = 0
+        self.points: list[tuple[float, float]] = []
+
+    def world_to_screen(self, point: tuple[float, float]) -> tuple[int, int]:
+        x = point[0] * self.screen_width // 12
+        y = point[1] * self.screen_height // 12
+        x = x * self.zoom + self.offset_x + self.screen_width // 2
+        y = self.screen_height - (y * self.zoom + self.offset_y)
+        return int(x), int(y)
+
+    def screen_to_world(self, point: tuple[int, int]) -> tuple[float, float]:
+        x = (point[0] - self.screen_width // 2 - self.offset_x) / self.zoom
+        y = (self.screen_height - point[1] - self.offset_y) / self.zoom
+        x = x / (self.screen_width // 12)
+        y = y / (self.screen_height // 12)
+        return x, y
+
+    def add_world_point(self, point: tuple[float, float]):
+        self.points.append(point)
+
+    def add_screen_point(self, point: tuple[int, int]):
+        self.points.append(self.screen_to_world(point))
 
     def zoom_in(self, factor: float = 1.1):
         self.zoom *= factor
@@ -78,22 +99,16 @@ class PygameGraphicDrawer(GraphicDrawer):
                     elif event.key == pygame.K_DOWN:
                         self.pan(0, 10)
 
-            next_point = next(self.graphic)
+            try:
+                self.add_world_point(next(self.graphic))
+            except StopIteration:
+                self.running = False
 
-            # scale coordinates
-            next_point = (next_point[0] * self.screen_width // 12, next_point[1] * self.screen_height // 12)
+            self.screen.fill((0, 0, 0))
 
-            next_point = (next_point[0] * self.zoom + self.offset_x, next_point[1] * self.zoom + self.offset_y)
-
-            # convert center oriented coordinates to top left oriented coordinates
-            next_point = (next_point[0] + self.screen_width // 2, self.screen_height // 2 - next_point[1])
-
-            # move shape to bottom of screen
-            next_point = (next_point[0], next_point[1] + self.screen_height // 2)
-
-            next_point = (int(next_point[0]), int(next_point[1]))
-
-            pygame.draw.circle(self.screen, self.graphic.shape_color, next_point, 1)
+            for point in self.points:
+                screen_point = self.world_to_screen(point)
+                pygame.draw.circle(self.screen, self.graphic.shape_color, screen_point, 1)
 
             self.iteration_count += 1
             if self.iteration_count >= self.max_iteration_count:
