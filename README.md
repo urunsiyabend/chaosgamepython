@@ -16,6 +16,11 @@ With inheriting GraphicDrawer abstract class, you can create new graphic drawers
 
 PygameGraphicDrawer is a concrete implementation of GraphicDrawer abstract class. It uses PyGame to draw the points on the screen.
 
+### GUI application
+You can run `app.py` to launch a small GUI with a side bar. Select the shape from
+the dropdown, set the iteration count (default is 100000) and press **Run** to
+start the simulation.
+
 
 ## Built-in shapes
 ### Sierpinski triangle

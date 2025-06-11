@@ -5,14 +5,20 @@ from chaosgame import ChaosGameGraphic
 
 
 class BarnsleyFern(ChaosGameGraphic):
-    def __init__(self, x0, y0):
+    def __init__(self, x0: float, y0: float, max_iteration_count: int = 100000):
         self.starting_point = (x0, y0)
         self.x, self.y = self.starting_point
         self.shape_color = "green"
+        self.max_iteration_count = max_iteration_count
+        self.iteration_count = 0
 
     def __next__(self):
+        if self.iteration_count >= self.max_iteration_count:
+            raise StopIteration
+
         next_func = self.next_func
         self.x, self.y = next_func()
+        self.iteration_count += 1
         return self.x, self.y
 
     def func_1(self):

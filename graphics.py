@@ -12,7 +12,7 @@ class GraphicDrawer(ABC):
         pass
 
 class PygameGraphicDrawer(GraphicDrawer):
-    def __init__(self, graphic: ChaosGameGraphic, screen_width: int, screen_height: int, fullscreen: bool, screen_caption: str):
+    def __init__(self, graphic: ChaosGameGraphic, screen_width: int, screen_height: int, fullscreen: bool, screen_caption: str, max_iteration_count: int = 100000):
         pygame.init()
 
         super().__init__(graphic)
@@ -31,6 +31,7 @@ class PygameGraphicDrawer(GraphicDrawer):
         self.clock = pygame.time.Clock()
         self.running = True
         self.iteration_count = 0
+        self.max_iteration_count = max_iteration_count
 
     def show_iteration_count(self, iteration_count: int):
         surface = pygame.Surface((200, 50), pygame.SRCALPHA)
@@ -66,7 +67,7 @@ class PygameGraphicDrawer(GraphicDrawer):
             pygame.draw.circle(self.screen, self.graphic.shape_color, next_point, 1)
 
             self.iteration_count += 1
-            if self.iteration_count >= 10 ** 6:
+            if self.iteration_count >= self.max_iteration_count:
                 self.running = False
 
             self.show_iteration_count(self.iteration_count)
