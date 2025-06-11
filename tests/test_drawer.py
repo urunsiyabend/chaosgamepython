@@ -102,3 +102,34 @@ def test_pan_drag_updates_offset():
 
     drawer.end_pan()
 
+
+def test_step_and_stop():
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    import pygame
+
+    pygame.init()
+    screen = pygame.display.set_mode((50, 50))
+    shape = BarnsleyFern(0, 0, max_iteration_count=2)
+    drawer = PygameGraphicDrawer(shape, 50, 50, False, "test", screen=screen)
+
+    assert drawer.iteration_count == 0
+    drawer.step()
+    assert drawer.iteration_count == 1
+
+    drawer.stop()
+    drawer.step()
+    # iteration count should not change after stopping
+    assert drawer.iteration_count == 1
+
+
+def test_drawer_uses_provided_screen():
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    import pygame
+
+    pygame.init()
+    screen = pygame.display.set_mode((60, 60))
+    shape = BarnsleyFern(0, 0)
+    drawer = PygameGraphicDrawer(shape, 60, 60, False, "test", screen=screen)
+
+    assert drawer.screen is screen
+

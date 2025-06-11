@@ -32,6 +32,14 @@ class ChaosGameApp:
             text="Run",
             manager=self.manager,
         )
+        self.stop_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(10, 130, 200, 30),
+            text="Stop",
+            manager=self.manager,
+        )
+        self.stop_button.disable()
+
+        self.drawer: PygameGraphicDrawer | None = None
         self.clock = pygame.time.Clock()
 
     def event_loop(self):
@@ -47,7 +55,17 @@ class ChaosGameApp:
                         and event.ui_element == self.run_button
                     ):
                         self.start_simulation()
+                    if (
+                        event.user_type == pygame_gui.UI_BUTTON_PRESSED
+                        and event.ui_element == self.stop_button
+                    ):
+                        self.stop_simulation()
+                if self.drawer:
+                    self.drawer.handle_event(event)
                 self.manager.process_events(event)
+
+            if self.drawer and self.drawer.running:
+                self.drawer.step()
             self.manager.update(time_delta)
             self.screen.fill((0, 0, 0))
             self.manager.draw_ui(self.screen)
@@ -62,15 +80,24 @@ class ChaosGameApp:
             iteration_count = DEFAULT_ITERATIONS
         shape_name = shape_name[0]
         shape = load_shape(shape_name, iteration_count)
-        drawer = PygameGraphicDrawer(
+        self.drawer = PygameGraphicDrawer(
             shape,
             self.width,
             self.height,
             self.fullscreen,
             shape_name,
             max_iteration_count=iteration_count,
+            screen=self.screen,
         )
-        drawer.draw()
+        self.stop_button.enable()
+        self.run_button.disable()
+
+    def stop_simulation(self):
+        if self.drawer:
+            self.drawer.stop()
+        self.drawer = None
+        self.stop_button.disable()
+        self.run_button.enable()
 
 
 if __name__ == "__main__":
