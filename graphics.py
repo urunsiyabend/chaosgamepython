@@ -37,6 +37,8 @@ class PygameGraphicDrawer(GraphicDrawer):
         self.offset_x = 0
         self.offset_y = 0
         self.points: list[tuple[float, float]] = []
+        self._dragging = False
+        self._last_mouse: tuple[int, int] | None = None
 
     def world_to_screen(self, point: tuple[float, float]) -> tuple[int, int]:
         x = point[0] * self.screen_width // 12
@@ -64,9 +66,33 @@ class PygameGraphicDrawer(GraphicDrawer):
     def zoom_out(self, factor: float = 1.1):
         self.zoom /= factor
 
+    def zoom_at(self, factor: float, screen_pos: tuple[int, int]):
+        world = self.screen_to_world(screen_pos)
+        self.zoom *= factor
+        scaled_x = world[0] * self.screen_width // 12
+        scaled_y = world[1] * self.screen_height // 12
+        self.offset_x = screen_pos[0] - scaled_x * self.zoom - self.screen_width // 2
+        self.offset_y = self.screen_height - screen_pos[1] - scaled_y * self.zoom
+
     def pan(self, dx: int, dy: int):
         self.offset_x += dx
         self.offset_y += dy
+
+    def start_pan(self, pos: tuple[int, int]):
+        self._dragging = True
+        self._last_mouse = pos
+
+    def pan_drag(self, pos: tuple[int, int]):
+        if not self._dragging or self._last_mouse is None:
+            return
+        dx = pos[0] - self._last_mouse[0]
+        dy = pos[1] - self._last_mouse[1]
+        self.pan(dx, dy)
+        self._last_mouse = pos
+
+    def end_pan(self):
+        self._dragging = False
+        self._last_mouse = None
 
     def show_iteration_count(self, iteration_count: int):
         surface = pygame.Surface((200, 50), pygame.SRCALPHA)
@@ -85,19 +111,17 @@ class PygameGraphicDrawer(GraphicDrawer):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key in (pygame.K_EQUALS, pygame.K_PLUS, pygame.K_KP_PLUS):
-                        self.zoom_in()
-                    elif event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
-                        self.zoom_out()
-                    elif event.key == pygame.K_LEFT:
-                        self.pan(-10, 0)
-                    elif event.key == pygame.K_RIGHT:
-                        self.pan(10, 0)
-                    elif event.key == pygame.K_UP:
-                        self.pan(0, -10)
-                    elif event.key == pygame.K_DOWN:
-                        self.pan(0, 10)
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    self.start_pan(event.pos)
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    self.end_pan()
+                elif event.type == pygame.MOUSEMOTION:
+                    self.pan_drag(event.pos)
+                elif event.type == pygame.MOUSEWHEEL:
+                    factor = 1.1 if event.y > 0 else 1 / 1.1
+                    self.zoom_at(factor, pygame.mouse.get_pos())
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.running = False
 
             try:
                 self.add_world_point(next(self.graphic))

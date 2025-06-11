@@ -71,3 +71,34 @@ def test_add_screen_point():
     assert drawer.points[-1][0] == pytest.approx(world_pt[0])
     assert drawer.points[-1][1] == pytest.approx(world_pt[1])
 
+
+def test_zoom_at_keeps_cursor_point():
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    shape = BarnsleyFern(0, 0)
+    drawer = PygameGraphicDrawer(shape, 200, 200, False, "test")
+
+    world_pt = (0.5, 0.5)
+    screen_pt = drawer.world_to_screen(world_pt)
+
+    drawer.zoom_at(2.0, screen_pt)
+
+    new_screen = drawer.world_to_screen(world_pt)
+    assert new_screen == screen_pt
+
+
+def test_pan_drag_updates_offset():
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    shape = BarnsleyFern(0, 0)
+    drawer = PygameGraphicDrawer(shape, 100, 100, False, "test")
+
+    drawer.start_pan((10, 10))
+    drawer.pan_drag((15, 12))
+    assert drawer.offset_x == 5
+    assert drawer.offset_y == 2
+
+    drawer.pan_drag((14, 15))
+    assert drawer.offset_x == 4
+    assert drawer.offset_y == 5
+
+    drawer.end_pan()
+
