@@ -76,7 +76,7 @@ class PygameGraphicDrawer(GraphicDrawer):
 
     def pan(self, dx: int, dy: int):
         self.offset_x += dx
-        self.offset_y += dy
+        self.offset_y -= dy
 
     def start_pan(self, pos: tuple[int, int]):
         self._dragging = True
