@@ -81,6 +81,7 @@ class ChaosGameApp:
             iteration_count = int(self.iter_input.get_text())
         except ValueError:
             iteration_count = DEFAULT_ITERATIONS
+        shape_name = shape_name[0]
         shape = load_shape(shape_name, iteration_count)
         self.drawer = PygameGraphicDrawer(
             shape,
