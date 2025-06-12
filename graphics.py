@@ -12,7 +12,16 @@ class GraphicDrawer(ABC):
         pass
 
 class PygameGraphicDrawer(GraphicDrawer):
-    def __init__(self, graphic: ChaosGameGraphic, screen_width: int, screen_height: int, fullscreen: bool, screen_caption: str, max_iteration_count: int = 100000):
+    def __init__(
+        self,
+        graphic: ChaosGameGraphic,
+        screen_width: int,
+        screen_height: int,
+        fullscreen: bool,
+        screen_caption: str,
+        max_iteration_count: int = 100000,
+        screen: pygame.Surface | None = None,
+    ):
         pygame.init()
 
         super().__init__(graphic)
@@ -22,10 +31,15 @@ class PygameGraphicDrawer(GraphicDrawer):
 
         self.fullscreen = fullscreen
         self.screen_caption = screen_caption
-        self.screen = pygame.display.set_mode(
-            (self.screen_width, self.screen_height),
-            pygame.FULLSCREEN if self.fullscreen else 0
-        )
+        if screen is None:
+            self.screen = pygame.display.set_mode(
+                (self.screen_width, self.screen_height),
+                pygame.FULLSCREEN if self.fullscreen else 0,
+            )
+            self._external_screen = False
+        else:
+            self.screen = screen
+            self._external_screen = True
         pygame.display.set_caption(self.screen_caption)
 
         self.clock = pygame.time.Clock()
@@ -76,7 +90,7 @@ class PygameGraphicDrawer(GraphicDrawer):
 
     def pan(self, dx: int, dy: int):
         self.offset_x += dx
-        self.offset_y -= dy
+        self.offset_y += dy
 
     def start_pan(self, pos: tuple[int, int]):
         self._dragging = True
@@ -106,48 +120,70 @@ class PygameGraphicDrawer(GraphicDrawer):
         # draw shape
         pass
 
+    def process_event(self, event: pygame.event.Event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            self.start_pan(event.pos)
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            self.end_pan()
+        elif event.type == pygame.MOUSEMOTION:
+            self.pan_drag(event.pos)
+        elif event.type == pygame.MOUSEWHEEL:
+            factor = 1.1 if event.y > 0 else 1 / 1.1
+            self.zoom_at(factor, pygame.mouse.get_pos())
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.running = False
+
+    def step(self):
+        if not self.running:
+            return
+        try:
+            self.add_world_point(next(self.graphic))
+        except StopIteration:
+            self.running = False
+            return
+
+        self.iteration_count += 1
+        if self.iteration_count >= self.max_iteration_count:
+            self.running = False
+
+    def render(self):
+        self.screen.fill((0, 0, 0))
+
+        for point in self.points:
+            screen_point = self.world_to_screen(point)
+            pygame.draw.circle(
+                self.screen, self.graphic.shape_color, screen_point, 1
+            )
+
+        self.show_iteration_count(self.iteration_count)
+
+        if not self._external_screen:
+            pygame.display.flip()
+
+    def update(self):
+        self.step()
+        if self.running:
+            self.render()
+        self.clock.tick(500)
+
     def _loop(self):
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self.start_pan(event.pos)
-                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                    self.end_pan()
-                elif event.type == pygame.MOUSEMOTION:
-                    self.pan_drag(event.pos)
-                elif event.type == pygame.MOUSEWHEEL:
-                    factor = 1.1 if event.y > 0 else 1 / 1.1
-                    self.zoom_at(factor, pygame.mouse.get_pos())
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    self.running = False
+                else:
+                    self.process_event(event)
 
-            try:
-                self.add_world_point(next(self.graphic))
-            except StopIteration:
-                self.running = False
-
-            self.screen.fill((0, 0, 0))
-
-            for point in self.points:
-                screen_point = self.world_to_screen(point)
-                pygame.draw.circle(self.screen, self.graphic.shape_color, screen_point, 1)
-
-            self.iteration_count += 1
-            if self.iteration_count >= self.max_iteration_count:
-                self.running = False
-
-            self.show_iteration_count(self.iteration_count)
-
-            pygame.display.flip()
-
-            self.clock.tick(500)
+            self.update()
 
     def _quit(self):
-        pygame.quit()
+        if not self._external_screen:
+            pygame.quit()
 
     def draw(self):
         self._setup()
         self._loop()
         self._quit()
+
+    def stop(self):
+        self.running = False

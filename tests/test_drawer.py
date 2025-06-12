@@ -2,6 +2,7 @@ import os
 import pytest
 from graphics import PygameGraphicDrawer
 from barnsley_fern import BarnsleyFern
+import pygame
 
 
 def test_drawer_has_max_iteration_count():
@@ -101,4 +102,26 @@ def test_pan_drag_updates_offset():
     assert drawer.offset_y == 5
 
     drawer.end_pan()
+
+
+def test_drawer_stop_method():
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    shape = BarnsleyFern(0, 0)
+    drawer = PygameGraphicDrawer(shape, 100, 100, False, "test")
+
+    drawer.stop()
+    assert not drawer.running
+
+
+def test_update_stops_after_max_iterations():
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+    shape = BarnsleyFern(0, 0, max_iteration_count=1)
+    drawer = PygameGraphicDrawer(
+        shape, 100, 100, False, "test", max_iteration_count=1
+    )
+    drawer.screen = pygame.Surface((100, 100))
+
+    drawer.update()
+
+    assert not drawer.running
 
