@@ -32,6 +32,8 @@ class ChaosGameApp:
             text="Run",
             manager=self.manager,
         )
+        self.drawer: PygameGraphicDrawer | None = None
+        self.simulation_running = False
         self.clock = pygame.time.Clock()
 
     def event_loop(self):
@@ -46,10 +48,22 @@ class ChaosGameApp:
                         event.user_type == pygame_gui.UI_BUTTON_PRESSED
                         and event.ui_element == self.run_button
                     ):
-                        self.start_simulation()
+                        if not self.simulation_running:
+                            self.start_simulation()
+                        else:
+                            self.stop_simulation()
+                if self.simulation_running and self.drawer:
+                    self.drawer.process_event(event)
+
                 self.manager.process_events(event)
+            if self.simulation_running and self.drawer:
+                self.drawer.update()
+                if not self.drawer.running:
+                    self.stop_simulation()
+            else:
+                self.screen.fill((0, 0, 0))
+
             self.manager.update(time_delta)
-            self.screen.fill((0, 0, 0))
             self.manager.draw_ui(self.screen)
             pygame.display.flip()
         pygame.quit()
@@ -62,15 +76,24 @@ class ChaosGameApp:
             iteration_count = DEFAULT_ITERATIONS
         shape_name = shape_name[0]
         shape = load_shape(shape_name, iteration_count)
-        drawer = PygameGraphicDrawer(
+        self.drawer = PygameGraphicDrawer(
             shape,
             self.width,
             self.height,
             self.fullscreen,
             shape_name,
             max_iteration_count=iteration_count,
+            screen=self.screen,
         )
-        drawer.draw()
+        self.simulation_running = True
+        self.run_button.set_text("Stop")
+
+    def stop_simulation(self):
+        if self.drawer:
+            self.drawer.stop()
+            self.drawer = None
+        self.simulation_running = False
+        self.run_button.set_text("Run")
 
 
 if __name__ == "__main__":
